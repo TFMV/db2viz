@@ -2,6 +2,8 @@
 
 db2viz is a data pipeline project that demonstrates how to move data from an on-premises database (Postgres) to Google Cloud BigQuery for visualization in Looker Studio.
 
+![db2viz](assets/db2viz.png)
+
 ## Project Structure
 
 - `cmd/main.go`: The entry point for the application.
