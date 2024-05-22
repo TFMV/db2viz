@@ -1,0 +1,13 @@
+postgres:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: mysecretpassword
+  dbname: tfmv
+  sslmode: disable
+
+bigquery:
+  project_id: your-gcp-project-id
+  dataset_id: your-dataset-id
+  table_id: your-table-id
+  credentials: /path/to/your/credentials.json
