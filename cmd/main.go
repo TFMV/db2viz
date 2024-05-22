@@ -59,7 +59,7 @@ func main() {
 			}
 
 			// Publish data to PubSub
-			err = pubSubClient.Publish(ctx, transformedData)
+			err = pubSubClient.Publish(ctx, transformedData, cfg.PubSub.Workers)
 			if err != nil {
 				log.Printf("Failed to publish data for table %s: %v", tableConfig.Name, err)
 			} else {

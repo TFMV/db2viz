@@ -15,3 +15,4 @@ postgres:
 pubsub:
   project_id: tfmv-371720
   credentials: /Users/thomasmcgeehan/db2viz/db2viz/config/sa.json
+  workers: 20

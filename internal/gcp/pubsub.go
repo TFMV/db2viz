@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 
 	"cloud.google.com/go/pubsub"
 	"github.com/TFMV/db2viz/config"
@@ -39,11 +40,45 @@ func NewPubSubClient(ctx context.Context, cfg config.PubSubConfig, topicID strin
 	}, nil
 }
 
-func (p *PubSubClient) Publish(ctx context.Context, data []map[string]interface{}) error {
+func (p *PubSubClient) Publish(ctx context.Context, data []map[string]interface{}, workers int) error {
+	recordsCh := make(chan map[string]interface{}, len(data))
+	resultsCh := make(chan error, len(data))
+
+	var wg sync.WaitGroup
+
+	// Start workers
+	for i := 0; i < workers; i++ {
+		wg.Add(1)
+		go p.worker(ctx, recordsCh, resultsCh, &wg)
+	}
+
+	// Send data to workers
 	for _, record := range data {
+		recordsCh <- record
+	}
+	close(recordsCh)
+
+	// Wait for all workers to finish
+	wg.Wait()
+	close(resultsCh)
+
+	// Collect results
+	for err := range resultsCh {
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (p *PubSubClient) worker(ctx context.Context, recordsCh <-chan map[string]interface{}, resultsCh chan<- error, wg *sync.WaitGroup) {
+	defer wg.Done()
+	for record := range recordsCh {
 		jsonData, err := json.Marshal(record)
 		if err != nil {
-			return fmt.Errorf("failed to marshal record: %v", err)
+			resultsCh <- fmt.Errorf("failed to marshal record: %v", err)
+			continue
 		}
 
 		result := p.topic.Publish(ctx, &pubsub.Message{
@@ -52,8 +87,10 @@ func (p *PubSubClient) Publish(ctx context.Context, data []map[string]interface{
 
 		_, err = result.Get(ctx)
 		if err != nil {
-			return fmt.Errorf("failed to publish message: %v", err)
+			resultsCh <- fmt.Errorf("failed to publish message: %v", err)
+			continue
 		}
+
+		resultsCh <- nil
 	}
-	return nil
 }
