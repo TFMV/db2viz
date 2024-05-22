@@ -27,29 +27,23 @@ func main() {
 	}
 	defer conn.Pool.Close()
 
-	// Initialize PubSub client
-	pubSubClient, err := gcp.NewPubSubClient(ctx, cfg.PubSub)
-	if err != nil {
-		log.Fatalf("Failed to create PubSub client: %v", err)
-	}
-
 	// Create a wait group for concurrency control
 	var wg sync.WaitGroup
 	semaphore := make(chan struct{}, cfg.Postgres.Concurrency)
 
-	for _, table := range cfg.Postgres.Tables {
+	for _, tableConfig := range cfg.Postgres.Tables {
 		wg.Add(1)
 		semaphore <- struct{}{}
 
-		go func(table string) {
+		go func(tableConfig config.TableConfig) {
 			defer wg.Done()
 			defer func() { <-semaphore }()
 
 			// Load data from Postgres
-			loader := data.NewLoader(conn, table)
+			loader := data.NewLoader(conn, tableConfig.Name)
 			records, err := loader.LoadData(ctx)
 			if err != nil {
-				log.Printf("Failed to load data for table %s: %v", table, err)
+				log.Printf("Failed to load data for table %s: %v", tableConfig.Name, err)
 				return
 			}
 
@@ -57,14 +51,21 @@ func main() {
 			transformer := data.NewTransformer()
 			transformedData := transformer.Transform(records)
 
+			// Initialize PubSub client for the specific topic
+			pubSubClient, err := gcp.NewPubSubClient(ctx, cfg.PubSub, tableConfig.TopicID)
+			if err != nil {
+				log.Printf("Failed to create PubSub client for table %s: %v", tableConfig.Name, err)
+				return
+			}
+
 			// Publish data to PubSub
 			err = pubSubClient.Publish(ctx, transformedData)
 			if err != nil {
-				log.Printf("Failed to publish data for table %s: %v", table, err)
+				log.Printf("Failed to publish data for table %s: %v", tableConfig.Name, err)
 			} else {
-				log.Printf("Successfully published data for table %s", table)
+				log.Printf("Successfully published data for table %s", tableConfig.Name)
 			}
-		}(table)
+		}(tableConfig)
 	}
 
 	wg.Wait()

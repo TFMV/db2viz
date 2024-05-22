@@ -6,11 +6,12 @@ postgres:
   dbname: tfmv
   sslmode: disable
   tables:
-    - flights
-    - your_second_table  # Add more tables as needed
-  concurrency: 4  # Number of concurrent table processing
+    - name: nation
+      topic_id: nation
+    - name: regions
+      topic_id: regions
+  concurrency: 4
 
 pubsub:
   project_id: tfmv-371720
-  topic_id: my_topic
   credentials: /Users/thomasmcgeehan/db2viz/db2viz/config/sa.json

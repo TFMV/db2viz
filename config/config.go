@@ -12,19 +12,23 @@ type Config struct {
 }
 
 type PostgresConfig struct {
-	Host        string   `yaml:"host"`
-	Port        int      `yaml:"port"`
-	User        string   `yaml:"user"`
-	Password    string   `yaml:"password"`
-	DBName      string   `yaml:"dbname"`
-	SSLMode     string   `yaml:"sslmode"`
-	Tables      []string `yaml:"tables"`      // List of tables
-	Concurrency int      `yaml:"concurrency"` // Number of concurrent table processing
+	Host        string        `yaml:"host"`
+	Port        int           `yaml:"port"`
+	User        string        `yaml:"user"`
+	Password    string        `yaml:"password"`
+	DBName      string        `yaml:"dbname"`
+	SSLMode     string        `yaml:"sslmode"`
+	Tables      []TableConfig `yaml:"tables"`
+	Concurrency int           `yaml:"concurrency"`
+}
+
+type TableConfig struct {
+	Name    string `yaml:"name"`
+	TopicID string `yaml:"topic_id"`
 }
 
 type PubSubConfig struct {
 	ProjectID   string `yaml:"project_id"`
-	TopicID     string `yaml:"topic_id"`
 	Credentials string `yaml:"credentials"`
 }
 
