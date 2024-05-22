@@ -27,18 +27,22 @@ db2viz is a data pipeline project that demonstrates how to move data from an on-
 
     ```yaml
     postgres:
-      host: localhost
-      port: 5432
-      user: postgres
-      password: mysecretpassword
-      dbname: tfmv
-      sslmode: disable
-      table: flights  # Add the table name here
+    host: localhost
+    port: 5432
+    user: postgres
+    password: mysecretpassword
+    dbname: tfmv
+    sslmode: disable
+    tables:
+        - name: nation
+        topic_id: nation
+        - name: regions
+        topic_id: regions
+    concurrency: 2
 
     pubsub:
-      project_id: tfmv-371720
-      topic_id: flights-topic
-      credentials: /path/to/your/service-account.json  # Path to the service account JSON file
+    project_id: tfmv-371720
+    credentials: /path/to/your/service-account.json 
     ```
 
 3. Build and run the Go application
