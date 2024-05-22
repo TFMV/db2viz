@@ -8,7 +8,7 @@ import (
 
 type Config struct {
 	Postgres PostgresConfig `yaml:"postgres"`
-	BigQuery BigQueryConfig `yaml:"bigquery"`
+	PubSub   PubSubConfig   `yaml:"pubsub"`
 }
 
 type PostgresConfig struct {
@@ -18,24 +18,26 @@ type PostgresConfig struct {
 	Password string `yaml:"password"`
 	DBName   string `yaml:"dbname"`
 	SSLMode  string `yaml:"sslmode"`
+	Table    string `yaml:"table"`
 }
 
-type BigQueryConfig struct {
+type PubSubConfig struct {
 	ProjectID   string `yaml:"project_id"`
-	DatasetID   string `yaml:"dataset_id"`
-	TableID     string `yaml:"table_id"`
+	TopicID     string `yaml:"topic_id"`
 	Credentials string `yaml:"credentials"`
 }
 
-func LoadConfig() (*Config, error) {
-	f, err := os.Open("config/config.yaml")
+func LoadConfig(filePath string) (*Config, error) {
+	data, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
 
 	var cfg Config
-	decoder := yaml.NewDecoder(f)
-	err = decoder.Decode(&cfg)
-	return &cfg, err
+	err = yaml.Unmarshal(data, &cfg)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cfg, nil
 }
