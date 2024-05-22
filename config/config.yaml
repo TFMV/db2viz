@@ -5,9 +5,12 @@ postgres:
   password: mysecretpassword
   dbname: tfmv
   sslmode: disable
-  table: flights
+  tables:
+    - flights
+    - your_second_table  # Add more tables as needed
+  concurrency: 4  # Number of concurrent table processing
 
 pubsub:
   project_id: tfmv-371720
-  topic_id: flights-topic
-  credentials: /Users/thomasmcgeehan/db2viz/db2viz/config/sa.json  # Path to the service account JSON file
+  topic_id: my_topic
+  credentials: /Users/thomasmcgeehan/db2viz/db2viz/config/sa.json
