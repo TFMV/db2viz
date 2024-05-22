@@ -15,19 +15,19 @@ type PubSubClient struct {
 	topic  *pubsub.Topic
 }
 
-func NewPubSubClient(ctx context.Context, cfg config.PubSubConfig) (*PubSubClient, error) {
+func NewPubSubClient(ctx context.Context, cfg config.PubSubConfig, topicID string) (*PubSubClient, error) {
 	client, err := pubsub.NewClient(ctx, cfg.ProjectID, option.WithCredentialsFile(cfg.Credentials))
 	if err != nil {
 		return nil, fmt.Errorf("failed to create PubSub client: %v", err)
 	}
 
-	topic := client.Topic(cfg.TopicID)
+	topic := client.Topic(topicID)
 	exists, err := topic.Exists(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to check if topic exists: %v", err)
 	}
 	if !exists {
-		topic, err = client.CreateTopic(ctx, cfg.TopicID)
+		topic, err = client.CreateTopic(ctx, topicID)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create topic: %v", err)
 		}
