@@ -1,45 +1,46 @@
 package db
 
 import (
-	"database/sql"
+	"context"
+	"fmt"
 	"log"
+
+	"github.com/TFMV/db2viz/config"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type DB2Connection struct {
-	*sql.DB
+type PostgresConnection struct {
+	Pool *pgxpool.Pool
 }
 
-func NewDB2Connection(cfg struct {
-	Host     string
-	Port     string
-	Username string
-	Password string
-	DBName   string
-}) (*DB2Connection, error) {
-	dsn := "HOSTNAME=" + cfg.Host + ";PORT=" + cfg.Port + ";DATABASE=" + cfg.DBName + ";UID=" + cfg.Username + ";PWD=" + cfg.Password + ";"
-	db, err := sql.Open("go_ibm_db", dsn)
+func NewPostgresConnection(cfg config.PostgresConfig) (*PostgresConnection, error) {
+	connStr := fmt.Sprintf("postgres://%s:%s@%s:%d/%s?sslmode=%s",
+		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DBName, cfg.SSLMode)
+	config, err := pgxpool.ParseConfig(connStr)
 	if err != nil {
 		return nil, err
 	}
-	if err := db.Ping(); err != nil {
-		return nil, err
-	}
-	log.Println("Connected to DB2 successfully")
-	return &DB2Connection{db}, nil
-}
-
-func LoadData(dbConn *DB2Connection) ([]map[string]interface{}, error) {
-	rows, err := dbConn.Query("SELECT * FROM your_table")
+	pool, err := pgxpool.NewWithConfig(context.Background(), config)
 	if err != nil {
 		return nil, err
+	}
+	log.Println("Connected to PostgreSQL successfully")
+	return &PostgresConnection{Pool: pool}, nil
+}
+
+func (pc *PostgresConnection) Close(ctx context.Context) {
+	pc.Pool.Close()
+}
+
+func LoadData(dbConn *PostgresConnection, table string) ([]map[string]interface{}, error) {
+	query := fmt.Sprintf("SELECT * FROM %s", table)
+	rows, err := dbConn.Pool.Query(context.Background(), query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute query: %w", err)
 	}
 	defer rows.Close()
 
-	columns, err := rows.Columns()
-	if err != nil {
-		return nil, err
-	}
-
+	columns := rows.FieldDescriptions()
 	var data []map[string]interface{}
 	for rows.Next() {
 		values := make([]interface{}, len(columns))
@@ -48,11 +49,11 @@ func LoadData(dbConn *DB2Connection) ([]map[string]interface{}, error) {
 			valuePtrs[i] = &values[i]
 		}
 		if err := rows.Scan(valuePtrs...); err != nil {
-			return nil, err
+			return nil, fmt.Errorf("failed to scan row: %w", err)
 		}
 		rowMap := make(map[string]interface{})
 		for i, col := range columns {
-			rowMap[col] = values[i]
+			rowMap[string(col.Name)] = values[i]
 		}
 		data = append(data, rowMap)
 	}

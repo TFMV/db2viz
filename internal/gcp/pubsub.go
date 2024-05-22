@@ -2,44 +2,66 @@ package gcp
 
 import (
 	"context"
-	"log"
+	"encoding/json"
+	"fmt"
 
 	"cloud.google.com/go/pubsub"
+	"github.com/TFMV/db2viz/config"
+	"google.golang.org/api/option"
 )
 
-type PubSubClient struct {
-	projectID string
-	client    *pubsub.Client
+type PubSubPublisher struct {
+	client *pubsub.Client
+	topic  *pubsub.Topic
 }
 
-func NewPubSubClient(cfg struct {
-	ProjectID       string
-	CredentialsFile string
-}) (*PubSubClient, error) {
+func NewPubSubPublisher(cfg config.PubSubConfig) (*PubSubPublisher, error) {
 	ctx := context.Background()
-	client, err := pubsub.NewClient(ctx, cfg.ProjectID)
+	client, err := pubsub.NewClient(ctx, cfg.ProjectID, option.WithCredentialsFile(cfg.Credentials))
 	if err != nil {
 		return nil, err
 	}
-	return &PubSubClient{
-		projectID: cfg.ProjectID,
-		client:    client,
+
+	// Check if the topic exists, and create it if it doesn't
+	topic := client.Topic(cfg.TopicID)
+	exists, err := topic.Exists(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if !exists {
+		topic, err = client.CreateTopic(ctx, cfg.TopicID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create topic: %v", err)
+		}
+		fmt.Printf("Created topic: %s\n", cfg.TopicID)
+	} else {
+		fmt.Printf("Using existing topic: %s\n", cfg.TopicID)
+	}
+
+	return &PubSubPublisher{
+		client: client,
+		topic:  topic,
 	}, nil
 }
 
-func (p *PubSubClient) Publish(topicName string, message []byte) error {
-	ctx := context.Background()
-	topic := p.client.Topic(topicName)
+func (publisher *PubSubPublisher) Publish(ctx context.Context, data []map[string]interface{}) error {
+	for _, record := range data {
+		message, err := json.Marshal(record)
+		if err != nil {
+			return fmt.Errorf("failed to marshal record: %v", err)
+		}
 
-	result := topic.Publish(ctx, &pubsub.Message{
-		Data: message,
-	})
+		result := publisher.topic.Publish(ctx, &pubsub.Message{
+			Data: message,
+		})
 
-	id, err := result.Get(ctx)
-	if err != nil {
-		return err
+		// Block until the result is returned and log server-assigned message ID
+		id, err := result.Get(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to publish message: %v", err)
+		}
+		fmt.Printf("Published a message with a message ID: %s\n", id)
 	}
 
-	log.Printf("Published message to topic %s; message ID: %s", topicName, id)
 	return nil
 }

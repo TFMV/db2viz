@@ -3,36 +3,41 @@ package data
 import (
 	"context"
 
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type Loader struct {
-	conn *pgx.Conn
+	db *pgxpool.Pool
 }
 
-func NewLoader(conn *pgx.Conn) *Loader {
-	return &Loader{conn: conn}
+func NewLoader(db *pgxpool.Pool) *Loader {
+	return &Loader{db: db}
 }
 
-func (l *Loader) LoadData(ctx context.Context) ([]map[string]interface{}, error) {
-	rows, err := l.conn.Query(ctx, "SELECT * FROM your_table")
+func (l *Loader) LoadData(ctx context.Context, table string) ([]map[string]interface{}, error) {
+	rows, err := l.db.Query(ctx, "SELECT * FROM "+table)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var records []map[string]interface{}
+	columns := rows.FieldDescriptions()
+	var data []map[string]interface{}
 	for rows.Next() {
-		values, err := rows.Values()
-		if err != nil {
+		values := make([]interface{}, len(columns))
+		valuePtrs := make([]interface{}, len(columns))
+		for i := range columns {
+			valuePtrs[i] = &values[i]
+		}
+		if err := rows.Scan(valuePtrs...); err != nil {
 			return nil, err
 		}
-		record := make(map[string]interface{})
-		for i, col := range rows.FieldDescriptions() {
-			record[string(col.Name)] = values[i]
+		rowMap := make(map[string]interface{})
+		for i, col := range columns {
+			rowMap[string(col.Name)] = values[i]
 		}
-		records = append(records, record)
+		data = append(data, rowMap)
+		// log.Printf("Loaded row: %+v\n", rowMap)
 	}
-
-	return records, nil
+	return data, nil
 }
