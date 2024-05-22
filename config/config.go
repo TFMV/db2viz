@@ -30,6 +30,7 @@ type TableConfig struct {
 type PubSubConfig struct {
 	ProjectID   string `yaml:"project_id"`
 	Credentials string `yaml:"credentials"`
+	Workers     int    `yaml:"workers"`
 }
 
 func LoadConfig(filePath string) (*Config, error) {
