@@ -1,0 +1,41 @@
+@startuml
+
+!define GCPIcons https://raw.githubusercontent.com/kevinswiber/puml-gcp-icons/v2.0.0/dist
+
+title Data Pipeline: On-prem Postgres to Looker Studio via GCP
+
+skinparam handwritten false
+skinparam shadowing true
+scale 800 width
+skinparam monochrome false
+autonumber
+
+participant "<$CloudSQL>\nOn-prem Postgres" as Postgres <<(C,#ADD8E6)>>
+participant "<$CloudRun>\nGo Application" as GoApp <<(C,#FFF8DC)>>
+participant "<$CloudPubSub>\nPub/Sub" as PubSub <<(C,#FFF8DC)>>
+participant "<$Operations>\nDataflow" as Dataflow <<(C,#FFF8DC)>>
+participant "<$BigQuery>\nBigQuery" as BigQuery <<(C,#90EE90)>>
+participant "<$LookerStudio>\nLooker Studio" as LookerStudio <<(C,#90EE90)>>
+
+box "On-prem" #ADD8E6
+    participant Postgres
+end box
+
+box "GCP" #FFF8DC
+    participant GoApp
+    participant PubSub
+    participant Dataflow
+    participant BigQuery
+end box
+
+box "Visualization" #90EE90
+    participant LookerStudio
+end box
+
+Postgres -> GoApp : Extract data from N tables
+GoApp -> PubSub : Publish transformed data
+PubSub -> Dataflow : Stream data
+Dataflow -> BigQuery : Load data
+BigQuery -> LookerStudio : Query data
+
+@enduml

@@ -12,13 +12,14 @@ type Config struct {
 }
 
 type PostgresConfig struct {
-	Host     string `yaml:"host"`
-	Port     int    `yaml:"port"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	DBName   string `yaml:"dbname"`
-	SSLMode  string `yaml:"sslmode"`
-	Table    string `yaml:"table"`
+	Host        string   `yaml:"host"`
+	Port        int      `yaml:"port"`
+	User        string   `yaml:"user"`
+	Password    string   `yaml:"password"`
+	DBName      string   `yaml:"dbname"`
+	SSLMode     string   `yaml:"sslmode"`
+	Tables      []string `yaml:"tables"`      // List of tables
+	Concurrency int      `yaml:"concurrency"` // Number of concurrent table processing
 }
 
 type PubSubConfig struct {
