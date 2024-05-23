@@ -3,16 +3,15 @@ postgres:
   port: 5432
   user: postgres
   password: mysecretpassword
-  dbname: tfmv
+  dbname: Adventureworks
   sslmode: disable
   tables:
-    - name: nation
-      topic_id: nation
-    - name: regions
-      topic_id: regions
-  concurrency: 4
+    - name: foo
+      schema: production
+      topic_id: foo_topic
+  concurrency: 2
 
 pubsub:
   project_id: tfmv-371720
   credentials: /Users/thomasmcgeehan/db2viz/db2viz/config/sa.json
-  workers: 20
+  workers: 10

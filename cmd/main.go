@@ -40,10 +40,10 @@ func main() {
 			defer func() { <-semaphore }()
 
 			// Load data from Postgres
-			loader := data.NewLoader(conn, tableConfig.Name)
+			loader := data.NewLoader(conn, tableConfig.Schema, tableConfig.Name)
 			records, err := loader.LoadData(ctx)
 			if err != nil {
-				log.Printf("Failed to load data for table %s: %v", tableConfig.Name, err)
+				log.Printf("Failed to load data for table %s.%s: %v", tableConfig.Schema, tableConfig.Name, err)
 				return
 			}
 
@@ -54,16 +54,16 @@ func main() {
 			// Initialize PubSub client for the specific topic
 			pubSubClient, err := gcp.NewPubSubClient(ctx, cfg.PubSub, tableConfig.TopicID)
 			if err != nil {
-				log.Printf("Failed to create PubSub client for table %s: %v", tableConfig.Name, err)
+				log.Printf("Failed to create PubSub client for table %s.%s: %v", tableConfig.Schema, tableConfig.Name, err)
 				return
 			}
 
 			// Publish data to PubSub
 			err = pubSubClient.Publish(ctx, transformedData, cfg.PubSub.Workers)
 			if err != nil {
-				log.Printf("Failed to publish data for table %s: %v", tableConfig.Name, err)
+				log.Printf("Failed to publish data for table %s.%s: %v", tableConfig.Schema, tableConfig.Name, err)
 			} else {
-				log.Printf("Successfully published data for table %s", tableConfig.Name)
+				log.Printf("Successfully published data for table %s.%s", tableConfig.Schema, tableConfig.Name)
 			}
 		}(tableConfig)
 	}

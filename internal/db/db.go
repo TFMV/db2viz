@@ -32,8 +32,9 @@ func (pc *PostgresConnection) Close(ctx context.Context) {
 	pc.Pool.Close()
 }
 
-func LoadData(dbConn *PostgresConnection, table string) ([]map[string]interface{}, error) {
-	query := fmt.Sprintf("SELECT * FROM %s", table)
+func LoadData(dbConn *PostgresConnection, schema string, table string) ([]map[string]interface{}, error) {
+	// Ensure table name is properly quoted to handle mixed-case and special characters
+	query := fmt.Sprintf(`SELECT * FROM "%s"."%s"`, schema, table)
 	rows, err := dbConn.Pool.Query(context.Background(), query)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute query: %w", err)
