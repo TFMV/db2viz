@@ -1,0 +1,83 @@
+postgres:
+  host: localhost
+  port: 5432
+  user: postgres
+  password: mysecretpassword
+  dbname: Adventureworks
+  sslmode: disable
+  tables:
+    - name: billofmaterials
+      schema: production
+      topic_id: bill_of_materials
+    - name: culture
+      schema: production
+      topic_id: culture
+    - name: document
+      schema: production
+      topic_id: document
+    - name: productcategory
+      schema: production
+      topic_id: product_category
+    - name: productsubcategory
+      schema: production
+      topic_id: product_subcategory
+    - name: product
+      schema: production
+      topic_id: product
+    - name: productcosthistory
+      schema: production
+      topic_id: product_cost_history
+    - name: productdescription
+      schema: production
+      topic_id: product_description
+    - name: productdocument
+      schema: production
+      topic_id: product_document
+    - name: location
+      schema: production
+      topic_id: location
+    - name: productinventory
+      schema: production
+      topic_id: product_inventory
+    - name: productlistpricehistory
+      schema: production
+      topic_id: product_list_price_history
+    - name: productmodelillustration
+      schema: production
+      topic_id: product_model_illustration
+    - name: productmodelproductdescriptionculture
+      schema: production
+      topic_id: product_model_product_description_culture
+    - name: productphoto
+      schema: production
+      topic_id: product_photo
+    - name: productproductphoto
+      schema: production
+      topic_id: product_product_photo
+    - name: productreview
+      schema: production
+      topic_id: product_review
+    - name: scrapreason
+      schema: production
+      topic_id: scrap_reason
+    - name: transactionhistory
+      schema: production
+      topic_id: transaction_history
+    - name: transactionhistoryarchive
+      schema: production
+      topic_id: transaction_history_archive
+    - name: unitmeasure
+      schema: production
+      topic_id: unit_measure
+    - name: workorder
+      schema: production
+      topic_id: work_order
+    - name: workorderrouting
+      schema: production
+      topic_id: work_order_routing
+  concurrency: 10
+
+pubsub:
+  project_id: tfmv-371720
+  credentials: /Users/thomasmcgeehan/db2viz/db2viz/config/sa.json
+  workers: 20

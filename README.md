@@ -35,14 +35,17 @@ db2viz is a data pipeline project that demonstrates how to move data from an on-
         sslmode: disable
         tables:
             - name: nation
-            topic_id: nation
+              schema: production
+              topic_id: nation
             - name: regions
-            topic_id: regions
+              schema: production
+              topic_id: regions
         concurrency: 2
 
     pubsub:
         project_id: tfmv-371720
         credentials: /path/to/your/service-account.json 
+        workers: 20
     ```
 
 3. Build and run the Go application
@@ -58,27 +61,20 @@ This project demonstrates a simple ETL (Extract, Transform, Load) pipeline:
 
 1. **Extract**: Data is extracted from a Postgres database.
 2. **Transform**: The data is transformed as necessary within the application.
-3. **Load**: 
+3. **Load**:
    - The transformed data is published to a Google Cloud Pub/Sub topic.
-   - A ready-made Dataflow template is used to stream data from Pub/Sub to BigQuery.
+   - Pub/Sub subscriptions are used to directly populate the BigQuery tables as the data streams into Pub/Sub.
 
 The data is ultimately loaded into Google BigQuery for visualization in Looker Studio.
 
-## Using Dataflow
+## Using Pub/Sub to BigQuery
 
 To stream data from Pub/Sub to BigQuery, follow these steps:
 
-1. Ensure you have the necessary permissions and enable the required APIs for Dataflow, Pub/Sub, and BigQuery in your Google Cloud project.
-2. Create a Dataflow job using the Pub/Sub to BigQuery template:
-    - Go to the Google Cloud Console.
-    - Navigate to Dataflow > Jobs.
-    - Click on "Create job from template".
-    - Select the "Pub/Sub to BigQuery" template.
-    - Fill in the required parameters:
-        - **Job name**: A unique name for your Dataflow job.
-        - **Pub/Sub topic**: The full name of the Pub/Sub topic (e.g., `projects/your-project/topics/flights-topic`).
-        - **BigQuery output table**: The BigQuery table where the data will be written (e.g., `your-project:dataset.flights`).
-    - Click "Run job".
+1. Ensure you have the necessary permissions and enable the required APIs for Pub/Sub and BigQuery in your Google Cloud project.
+2. Create Pub/Sub subscriptions that write directly to BigQuery:
+    - Define a subscription for each Pub/Sub topic associated with your tables.
+    - Configure the subscription to use a push endpoint that writes to BigQuery.
 
 ## Visualizing Data in Looker Studio
 
@@ -91,4 +87,34 @@ Once the data is in BigQuery, you can use Looker Studio to visualize it:
 5. Click "Connect".
 6. Create your report and add visualizations as needed.
 
-This setup provides a robust and scalable way to handle data movement from an on-premises database to a cloud-based data warehouse, making it accessible for advanced analytics and visualization.
+## Networking
+
+To set up connectivity between your on-premises network and Google Cloud, you can use one of the following methods:
+
+### Cloud VPN
+
+1. **Create a Cloud VPN Gateway**: Establish a VPN gateway in GCP.
+2. **Configure VPN Tunnels**: Set up IPsec tunnels between your on-premises VPN gateway and the GCP VPN gateway.
+3. **Use Cloud Router**: Configure dynamic routing using BGP.
+4. **Configure Firewall Rules**: Allow traffic between on-premises and GCP.
+
+### Cloud Interconnect
+
+For higher bandwidth and lower latency:
+
+1. **Order Circuits**: Arrange for dedicated or partner interconnect circuits.
+2. **Create Interconnect Connection**: Establish a physical connection to GCP.
+3. **Configure VLAN Attachments**: Set up VLANs for traffic routing.
+4. **Use Cloud Router**: Manage dynamic routing.
+
+### Networking Example
+
+To set up an HA VPN:
+
+1. **Create an HA VPN Gateway**:
+
+```sh
+   gcloud compute target-vpn-gateways create ha-vpn-gateway --region us-central1
+```
+
+![db2viz](assets/network.png)

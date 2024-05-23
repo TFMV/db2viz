@@ -1,0 +1,29 @@
+@startuml
+skinparam cloudBackgroundColor #F8F8F8
+
+actor User
+
+cloud "On-Premises Network" {
+    component OnPremVPNGateway as OPVPN
+    component OnPremRouter as OPRouter
+}
+
+cloud "Google Cloud Platform (GCP)" {
+    component CloudRouter as GCPRouter
+    component VPNGateway1 as HA_VPN1
+    component VPNGateway2 as HA_VPN2
+    component "Private Subnet" as GCPSubnet
+}
+
+User -> OPVPN : Data Traffic
+OPRouter <--> OPVPN : Routes Traffic
+
+OPVPN -down- HA_VPN1 : VPN Tunnel 1
+OPVPN -down- HA_VPN2 : VPN Tunnel 2
+
+HA_VPN1 -up- GCPRouter : BGP Session 1
+HA_VPN2 -up- GCPRouter : BGP Session 2
+
+GCPRouter <--> GCPSubnet : Routes Traffic
+
+@enduml

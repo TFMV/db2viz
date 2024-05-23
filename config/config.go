@@ -24,6 +24,7 @@ type PostgresConfig struct {
 
 type TableConfig struct {
 	Name    string `yaml:"name"`
+	Schema  string `yaml:"schema"`
 	TopicID string `yaml:"topic_id"`
 }
 
